@@ -1,0 +1,22 @@
+version: '3'
+services:
+  app:
+    image: digitalidea/laravel
+    restart: on-failure
+    ports:
+      - "80:80"
+    environment:
+      - TZ=America/Sao_Paulo
+    volumes:
+      - ./:/var/www/html
+  db:
+    image: mysql:8
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_DATABASE: "agenda_db"
+      MYSQL_ROOT_PASSWORD: "agenda"
+    ports:
+      - "3306:3306"
+    volumes:
+    - ./database/db:/var/lib/mysql
