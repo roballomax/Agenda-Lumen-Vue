@@ -2,7 +2,7 @@
 Para startar o projeto é necessário executar os seguintes comandos
 ``` bash
     docker-compose up -d \
-    && docker exec sistemacredk_app_1 composer install -vvv && npm install \
+    && docker exec <> composer install -vvv && npm install \
     && chmod 777 storage/ -R
 ```
 Após esses comandos executados, basta acessar o projeto em:
