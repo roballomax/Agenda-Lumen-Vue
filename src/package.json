@@ -30,7 +30,9 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.14.0",
-    "vue": "^2.6.11"
+    "vue": "^2.6.11",
+    "vue-material": "^1.0.0-beta-15",
+    "vuelidate": "^0.7.5"
   },
   "keywords": [],
   "author": "",
