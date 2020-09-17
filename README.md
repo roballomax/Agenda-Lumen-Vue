@@ -1,7 +1,7 @@
 # Agenda Lumen & Vue
 Para subir o server é necessário executar os seguintes comandos na raiz do projeto
 ``` bash
-    chmod 777 src/storage/ -R \ 
+    sudo chmod 777 src/storage/ -R \ 
     && sudo cp src/.env.example src/.env \ 
     && docker-compose up -d 
     
