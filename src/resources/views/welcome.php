@@ -8,8 +8,6 @@
     </head>
     <body>
         <div id="app">
-            <!-- <router-link to="/">AAAAA</router-link> -->
-
             <div class="content container">
                 <router-view></router-view>
             </div>

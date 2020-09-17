@@ -1992,52 +1992,145 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
       selected: {},
       showDialog: false,
       confirmDelete: false,
+      contato: [],
+      alertErro: false,
+      dialogContent: null,
+      alertTitle: null,
+      contatoId: null,
       formContato: {
         id: null,
         nome: null,
         telefone: null,
         email: null
-      },
-      people: [{
-        id: 1,
-        nome: 'Shawna Dubbin',
-        telefone: '(47) 99625-8781',
-        email: 'sdubbin0@geocities.com'
-      }, {
-        id: 2,
-        nome: 'Shawna Dubbin',
-        telefone: '(47) 99625-8781',
-        email: 'sdubbin0@geocities.com'
-      }, {
-        id: 3,
-        nome: 'Shawna Dubbin',
-        telefone: '(47) 99625-8781',
-        email: 'sdubbin0@geocities.com'
-      }, {
-        id: 4,
-        nome: 'Shawna Dubbin',
-        telefone: '(47) 99625-8781',
-        email: 'sdubbin0@geocities.com'
-      }]
+      }
     };
   },
   methods: {
-    getClass: function getClass(_ref) {
-      var id = _ref.id;
-      return {
-        'md-primary': id === 2,
-        'md-accent': id === 3
-      };
+    setAlertMsg: function setAlertMsg(title, msg) {
+      this.alertTitle = title;
+      this.dialogContent = msg;
+      this.alertErro = true;
     },
-    onSelect: function onSelect(item) {
-      this.selected = item;
+    catchErrorAxios: function catchErrorAxios(error) {
+      this.alertTitle = 'Ops, ocorreu um erro!';
+      this.dialogContent = 'Ocorreu um erro ao buscar os dados de contatos';
+      this.alertErro = true;
+    },
+    atualizaTabelaContatos: function atualizaTabelaContatos() {
+      var _this = this;
+
+      axios.get('/contato', {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.token
+        }
+      }).then(function (request) {
+        _this.contato = request.data.data;
+      })["catch"](function (error) {
+        _this.catchErrorAxios(error);
+      });
+    },
+    confirmDeleteFunction: function confirmDeleteFunction(item) {
+      this.contatoId = item.id;
+      this.confirmDelete = true;
+    },
+    deleteContato: function deleteContato() {
+      var _this2 = this;
+
+      axios["delete"]('/contato/' + this.contatoId, {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.token
+        }
+      }).then(function (request) {
+        _this2.atualizaTabelaContatos();
+
+        _this2.setAlertMsg('Contato Deletado com Sucesso!', request.data.message);
+      })["catch"](function (error) {
+        _this2.catchErrorAxios(error);
+      });
+    },
+    editarContato: function editarContato(item) {
+      var _this3 = this;
+
+      axios.get('/contato/' + item.id, {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.token
+        }
+      }).then(function (request) {
+        _this3.formContato = request.data.data.contato;
+        _this3.showDialog = true;
+      })["catch"](function (error) {
+        _this3.catchErrorAxios(error);
+      });
+    },
+    submeteForm: function submeteForm() {
+      if (this.formContato.id != null) {
+        this.atualizaContato();
+      } else {
+        this.cadastraContato();
+      }
+
+      this.showDialog = false;
+    },
+    atualizaContato: function atualizaContato() {
+      var _this4 = this;
+
+      axios.put('/contato/' + this.formContato.id, this.formContato, {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.token
+        }
+      }).then(function (request) {
+        _this4.atualizaTabelaContatos();
+
+        _this4.formContato = {
+          id: null,
+          nome: null,
+          telefone: null,
+          email: null
+        };
+
+        _this4.setAlertMsg('Contato Atualizado com Sucesso!', request.data.message);
+      })["catch"](function (error) {
+        _this4.catchErrorAxios(error);
+      });
+    },
+    cadastraContato: function cadastraContato() {
+      var _this5 = this;
+
+      axios.post('/contato', this.formContato, {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.token
+        }
+      }).then(function (request) {
+        _this5.atualizaTabelaContatos();
+
+        _this5.formContato = {
+          id: null,
+          nome: null,
+          telefone: null,
+          email: null
+        };
+
+        _this5.setAlertMsg('Contato Cadastrado com Sucesso!', request.data.message);
+      })["catch"](function (error) {
+        _this5.catchErrorAxios(error);
+      });
     }
+  },
+  mounted: function mounted() {
+    this.atualizaTabelaContatos();
   }
 });
 
@@ -2097,6 +2190,11 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
@@ -2104,13 +2202,25 @@ __webpack_require__.r(__webpack_exports__);
         login: null,
         senha: null
       },
-      enviando: false
+      enviando: false,
+      alertErro: false,
+      dialogContent: null
     };
   },
   methods: {
     loginCheck: function loginCheck() {
-      this.$router.push('contatos');
-      return true;
+      var _this = this;
+
+      this.enviando = true;
+      axios.post('/login', this.form).then(function (response) {
+        localStorage.token = response.data.data.token;
+
+        _this.$router.push('contatos');
+      })["catch"](function (error) {
+        _this.enviando = false;
+        _this.alertErro = true;
+        _this.dialogContent = 'Ocorreu um erro durante a validação dos dados, tente novamente.';
+      });
     }
   }
 });
@@ -20506,7 +20616,6 @@ var render = function() {
           "md-table",
           {
             attrs: { "md-card": "" },
-            on: { "md-selected": _vm.onSelect },
             scopedSlots: _vm._u([
               {
                 key: "md-table-row",
@@ -20514,10 +20623,7 @@ var render = function() {
                   var item = ref.item
                   return _c(
                     "md-table-row",
-                    {
-                      class: _vm.getClass(item),
-                      attrs: { "md-selectable": "single" }
-                    },
+                    { attrs: { "md-selectable": "single" } },
                     [
                       _c(
                         "md-table-cell",
@@ -20567,7 +20673,7 @@ var render = function() {
                               attrs: { type: "button" },
                               on: {
                                 click: function($event) {
-                                  _vm.showDialog = true
+                                  return _vm.editarContato(item)
                                 }
                               }
                             },
@@ -20581,7 +20687,7 @@ var render = function() {
                               attrs: { type: "button" },
                               on: {
                                 click: function($event) {
-                                  _vm.confirmDelete = true
+                                  return _vm.confirmDeleteFunction(item)
                                 }
                               }
                             },
@@ -20597,11 +20703,11 @@ var render = function() {
               }
             ]),
             model: {
-              value: _vm.people,
+              value: _vm.contato,
               callback: function($$v) {
-                _vm.people = $$v
+                _vm.contato = $$v
               },
-              expression: "people"
+              expression: "contato"
             }
           },
           [
@@ -20751,7 +20857,7 @@ var render = function() {
                     staticClass: "md-primary",
                     on: {
                       click: function($event) {
-                        _vm.showDialog = false
+                        return _vm.submeteForm()
                       }
                     }
                   },
@@ -20779,8 +20885,24 @@ var render = function() {
             "update:md-active": function($event) {
               _vm.confirmDelete = $event
             },
-            "md-cancel": false,
-            "md-confirm": false
+            "md-confirm": _vm.deleteContato
+          }
+        }),
+        _vm._v(" "),
+        _c("md-dialog-alert", {
+          attrs: {
+            "md-active": _vm.alertErro,
+            "md-title": _vm.alertTitle,
+            "md-content": _vm.dialogContent,
+            "md-confirm-text": "Ok!"
+          },
+          on: {
+            "update:mdActive": function($event) {
+              _vm.alertErro = $event
+            },
+            "update:md-active": function($event) {
+              _vm.alertErro = $event
+            }
           }
         })
       ],
@@ -20810,114 +20932,136 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", { staticClass: "md-layout" }, [
-    _c("div", { staticClass: "md-layout-item" }),
-    _vm._v(" "),
-    _c("div", { staticClass: "md-layout-item" }, [
-      _c(
-        "form",
-        {
-          staticClass: "md-layout",
-          attrs: { novalidate: "" },
-          on: {
-            submit: function($event) {
-              $event.preventDefault()
-              return _vm.loginCheck($event)
+  return _c(
+    "div",
+    { staticClass: "md-layout" },
+    [
+      _c("div", { staticClass: "md-layout-item" }),
+      _vm._v(" "),
+      _c("div", { staticClass: "md-layout-item" }, [
+        _c(
+          "form",
+          {
+            staticClass: "md-layout",
+            attrs: { novalidate: "" },
+            on: {
+              submit: function($event) {
+                $event.preventDefault()
+                return _vm.loginCheck($event)
+              }
             }
-          }
-        },
-        [
-          _c(
-            "md-card",
-            {
-              staticClass:
-                "md-layout-item md-size-50 md-small-size-100 login-card"
-            },
-            [
-              _c("md-card-header", [
-                _c("div", { staticClass: "md-title" }, [_vm._v("Login")])
-              ]),
-              _vm._v(" "),
-              _c("md-card-content", [
-                _c("div", { staticClass: "md-layout md-gutter" }, [
-                  _c(
-                    "div",
-                    { staticClass: "md-layout-item md-small-size-100" },
-                    [
-                      _c(
-                        "md-field",
-                        [
-                          _c("label", { attrs: { for: "login" } }, [
-                            _vm._v("Login")
-                          ]),
-                          _vm._v(" "),
-                          _c("md-input", {
-                            attrs: {
-                              name: "login",
-                              id: "login",
-                              disabled: _vm.enviando
-                            },
-                            model: {
-                              value: _vm.form.login,
-                              callback: function($$v) {
-                                _vm.$set(_vm.form, "login", $$v)
+          },
+          [
+            _c(
+              "md-card",
+              {
+                staticClass:
+                  "md-layout-item md-size-50 md-small-size-100 login-card"
+              },
+              [
+                _c("md-card-header", [
+                  _c("div", { staticClass: "md-title" }, [_vm._v("Login")])
+                ]),
+                _vm._v(" "),
+                _c("md-card-content", [
+                  _c("div", { staticClass: "md-layout md-gutter" }, [
+                    _c(
+                      "div",
+                      { staticClass: "md-layout-item md-small-size-100" },
+                      [
+                        _c(
+                          "md-field",
+                          [
+                            _c("label", { attrs: { for: "login" } }, [
+                              _vm._v("Login")
+                            ]),
+                            _vm._v(" "),
+                            _c("md-input", {
+                              attrs: {
+                                name: "login",
+                                id: "login",
+                                disabled: _vm.enviando
                               },
-                              expression: "form.login"
-                            }
-                          })
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "md-field",
-                        [
-                          _c("label", { attrs: { for: "senha" } }, [
-                            _vm._v("Senha")
-                          ]),
-                          _vm._v(" "),
-                          _c("md-input", {
-                            attrs: {
-                              name: "senha",
-                              id: "senha",
-                              type: "password",
-                              disabled: _vm.enviando
-                            },
-                            model: {
-                              value: _vm.form.senha,
-                              callback: function($$v) {
-                                _vm.$set(_vm.form, "senha", $$v)
+                              model: {
+                                value: _vm.form.login,
+                                callback: function($$v) {
+                                  _vm.$set(_vm.form, "login", $$v)
+                                },
+                                expression: "form.login"
+                              }
+                            })
+                          ],
+                          1
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "md-field",
+                          [
+                            _c("label", { attrs: { for: "senha" } }, [
+                              _vm._v("Senha")
+                            ]),
+                            _vm._v(" "),
+                            _c("md-input", {
+                              attrs: {
+                                name: "senha",
+                                id: "senha",
+                                type: "password",
+                                disabled: _vm.enviando
                               },
-                              expression: "form.senha"
-                            }
-                          })
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "md-button",
-                        {
-                          staticClass: "md-primary",
-                          attrs: { disabled: _vm.enviando, type: "submit" }
-                        },
-                        [_vm._v("Enviar")]
-                      )
-                    ],
-                    1
-                  )
+                              model: {
+                                value: _vm.form.senha,
+                                callback: function($$v) {
+                                  _vm.$set(_vm.form, "senha", $$v)
+                                },
+                                expression: "form.senha"
+                              }
+                            })
+                          ],
+                          1
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "md-button",
+                          {
+                            staticClass: "md-primary",
+                            attrs: { disabled: _vm.enviando, type: "submit" }
+                          },
+                          [_vm._v("Enviar")]
+                        )
+                      ],
+                      1
+                    )
+                  ])
                 ])
-              ])
-            ],
-            1
-          )
-        ],
-        1
-      )
-    ]),
-    _vm._v(" "),
-    _c("div", { staticClass: "md-layout-item" })
-  ])
+              ],
+              1
+            )
+          ],
+          1
+        )
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "md-layout-item" }),
+      _vm._v(" "),
+      _c("md-dialog-alert", {
+        attrs: {
+          "md-active": _vm.alertErro,
+          "md-title": "Ops, ocorreu um erro!",
+          "md-content": _vm.dialogContent,
+          "md-confirm-text": "Ok!"
+        },
+        on: {
+          "update:mdActive": function($event) {
+            _vm.alertErro = $event
+          },
+          "update:md-active": function($event) {
+            _vm.alertErro = $event
+          }
+        }
+      })
+    ],
+    1
+  )
 }
 var staticRenderFns = []
 render._withStripped = true

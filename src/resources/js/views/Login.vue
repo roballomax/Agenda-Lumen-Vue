@@ -41,6 +41,11 @@
             </form>
         </div>
         <div class="md-layout-item"></div>
+        <md-dialog-alert
+            :md-active.sync="alertErro"
+            md-title="Ops, ocorreu um erro!"
+            :md-content="dialogContent"
+            md-confirm-text="Ok!" />
     </div>
 </template>
 <script>
@@ -51,12 +56,24 @@ export default {
         login   : null,
         senha   : null,
       },
-      enviando: false,
+      enviando      : false,
+      
+      alertErro     : false,
+      dialogContent : null,
     }),
     methods: {
         loginCheck() {
-            this.$router.push('contatos');
-            return true;
+            this.enviando = true;
+            axios.post('/login', this.form)
+                .then(response => {
+                    localStorage.token = response.data.data.token;
+                    this.$router.push('contatos');
+                })
+                .catch(error => {
+                    this.enviando = false;
+                    this.alertErro = true;
+                    this.dialogContent = 'Ocorreu um erro durante a validação dos dados, tente novamente.';
+                });
         }
     }
 }

@@ -2,20 +2,20 @@
   <div class="md-layout">
     <div class="md-layout-item tableConteiner">
 
-        <md-table v-model="people" md-card @md-selected="onSelect">
+        <md-table v-model="contato" md-card>
         <md-table-toolbar>
             <h1 class="md-title">Agenda</h1>
             <md-button class="md-raised md-primary" type="button" @click="showDialog = true">Cadastrar Contato</md-button>
         </md-table-toolbar>
 
-        <md-table-row slot="md-table-row" slot-scope="{ item }" :class="getClass(item)" md-selectable="single">
+        <md-table-row slot="md-table-row" slot-scope="{ item }" md-selectable="single">
             <md-table-cell md-label="ID" md-sort-by="id" md-numeric>{{ item.id }}</md-table-cell>
             <md-table-cell md-label="Nome" md-sort-by="nome">{{ item.nome }}</md-table-cell>
             <md-table-cell md-label="Email" md-sort-by="email">{{ item.email }}</md-table-cell>
             <md-table-cell md-label="Telefone" md-sort-by="telefone">{{ item.telefone }}</md-table-cell>
             <md-table-cell md-label="Ações">
-                <md-button class="md-raised md-primary" @click="showDialog = true" type="button">Editar</md-button>
-                <md-button class="md-raised md-accent" @click="confirmDelete = true" type="button">Excluir</md-button>
+                <md-button class="md-raised md-primary" @click="editarContato(item)"    type="button">Editar</md-button>
+                <md-button class="md-raised md-accent"  @click="confirmDeleteFunction(item)" type="button">Excluir</md-button>
             </md-table-cell>
         </md-table-row>
         </md-table>
@@ -25,6 +25,7 @@
             
             <div class="md-layout">
                 <div class="md-layout-item">
+
                     <md-field>
                         <label for="nome">Nome</label>
                         <md-input 
@@ -64,7 +65,7 @@
 
                 <md-button 
                     class="md-primary" 
-                    @click="showDialog = false"
+                    @click="submeteForm()"
                 >Salvar</md-button>
             </md-dialog-actions>
         </md-dialog>
@@ -75,8 +76,14 @@
             md-content="Tem certeza que deseja deletar esse contato?"
             md-confirm-text="Sim"
             md-cancel-text="Não"
-            @md-cancel="false"
-            @md-confirm="false" />
+            @md-confirm="deleteContato" />
+
+
+        <md-dialog-alert
+            :md-active.sync="alertErro"
+            :md-title="alertTitle"
+            :md-content="dialogContent"
+            md-confirm-text="Ok!" />
 
     </div>
   </div>
@@ -88,49 +95,151 @@
       selected: {},
       showDialog: false,
       confirmDelete: false,
+      contato: [],
+
+      alertErro: false,
+      dialogContent: null,
+      alertTitle: null,
+
+      contatoId: null,
+
       formContato: {
             id        : null,
             nome      : null,
             telefone  : null,
             email     : null,
       },
-      people: [
-        {
-          id        : 1,
-          nome      : 'Shawna Dubbin',
-          telefone  : '(47) 99625-8781',
-          email     : 'sdubbin0@geocities.com',
-        },
-        {
-          id        : 2,
-          nome      : 'Shawna Dubbin',
-          telefone  : '(47) 99625-8781',
-          email     : 'sdubbin0@geocities.com',
-        },
-        {
-          id        : 3,
-          nome      : 'Shawna Dubbin',
-          telefone  : '(47) 99625-8781',
-          email     : 'sdubbin0@geocities.com',
-        },
-        {
-          id        : 4,
-          nome      : 'Shawna Dubbin',
-          telefone  : '(47) 99625-8781',
-          email     : 'sdubbin0@geocities.com',
-        },
-      ]
     }),
-    methods: {
-      getClass: ({ id }) => ({
-        'md-primary': id === 2,
-        'md-accent': id === 3
-      }),
 
-      onSelect (item) {
-        this.selected = item
+    methods: {
+
+      setAlertMsg(title, msg) {
+        this.alertTitle     = title;
+        this.dialogContent  = msg;
+        this.alertErro      = true;
+      },
+
+      catchErrorAxios(error) {
+        this.alertTitle     = 'Ops, ocorreu um erro!';
+        this.dialogContent  = 'Ocorreu um erro ao buscar os dados de contatos';
+        this.alertErro      = true;
+      },
+
+      atualizaTabelaContatos() {
+        axios.get('/contato', {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.token
+          }
+        })
+          .then((request) => {
+            this.contato = request.data.data; 
+          })
+          .catch(error => {
+            this.catchErrorAxios(error);
+          });
+      },
+
+      confirmDeleteFunction(item) {
+        this.contatoId = item.id;
+        this.confirmDelete = true
+      },
+
+      deleteContato() {
+        axios.delete('/contato/' + this.contatoId, {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.token
+          }
+        })
+          .then(request => {
+            
+            this.atualizaTabelaContatos();
+            this.setAlertMsg('Contato Deletado com Sucesso!', request.data.message);
+
+          })
+          .catch(error => {
+            this.catchErrorAxios(error);
+          });
+      },
+      editarContato(item) {
+        
+        axios.get('/contato/' + item.id, {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.token
+          }
+        })
+          .then(request => {
+
+            this.formContato = request.data.data.contato;
+            this.showDialog = true
+
+          })
+          .catch(error => {
+            this.catchErrorAxios(error);
+          });
+      },
+      submeteForm() {
+        
+        if(this.formContato.id != null) {
+          this.atualizaContato();
+        } else {
+          this.cadastraContato();
+        }
+
+        this.showDialog = false
+      },
+
+
+      atualizaContato() {
+
+        axios.put('/contato/' + this.formContato.id, this.formContato, {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.token
+          }
+        })
+          .then(request => {
+
+            this.atualizaTabelaContatos();
+            this.formContato = {
+                  id        : null,
+                  nome      : null,
+                  telefone  : null,
+                  email     : null,
+            };
+            this.setAlertMsg('Contato Atualizado com Sucesso!', request.data.message);
+
+          })
+          .catch(error => {
+            this.catchErrorAxios(error);
+          });
+      },
+
+      cadastraContato() {
+        axios.post('/contato', this.formContato, {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.token
+          }
+        })
+          .then(request => {
+            this.atualizaTabelaContatos();
+            this.formContato = {
+                  id        : null,
+                  nome      : null,
+                  telefone  : null,
+                  email     : null,
+            };
+            this.setAlertMsg('Contato Cadastrado com Sucesso!', request.data.message);
+
+          })
+          .catch(error => {
+            this.catchErrorAxios(error);
+          });
       }
-    }
+
+    },
+    mounted() {
+      this.atualizaTabelaContatos();
+    },
+
   }
 </script>
 

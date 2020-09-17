@@ -1,8 +1,9 @@
 <?php
 
+use App\Contato as AppContato;
 use Illuminate\Database\Seeder;
 
-class DatabaseSeeder extends Seeder
+class Contato extends Seeder
 {
     /**
      * Run the database seeds.
@@ -11,9 +12,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $this->call([
-            Usuario::class,
-            Contato::class,
-        ]);
+        factory(AppContato::class, 20)->create();
     }
 }
